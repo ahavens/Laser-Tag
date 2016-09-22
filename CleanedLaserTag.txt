@@ -1,0 +1,174 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include "Player.h"
+using namespace std;
+
+//when running ./main teamA.txt teamB.txt MatchFile.txt
+
+//Okay, I know it works, now we have to focus on cleaning it up
+int main(int argc, char *argv[])
+{
+    //counts number of text files
+    if(argc != 5)
+    {
+        cout<<"invalid number of text files, shame on you";
+        exit(1);
+    }
+
+    //strings that contain information contained in the text files
+    string line, playid, name, teamName, teamAName, teamBName, teamcount, tags, taggerString, taggedStrin, secondsString, pointsString;
+
+    //int that are either converted or added from the text files
+    int id, tagsInMatch, teamAPoints=0, teamBPoints=0, teamACount=0, teamBCount=0, tagger = 0, tagged = 0, seconds = 0, points = 0;
+
+    //this int is a for loop simulator
+    int i = 0;
+
+    //input objects for all text files
+    ifstream teamA(argv[1]);
+    ifstream teamB(argv[2]);
+    ifstream matchInfo(argv[3]);
+    //output file
+    ofstream outPutFile(argv[4]);
+    Player *teamAInfo;
+    Player *teamBInfo;
+
+    if(teamA.is_open())
+    {
+        getline(teamA, teamAName);
+        getline(teamA, teamcount);
+        teamACount = atoi(teamcount.c_str());
+
+        //initialize the array
+        teamAInfo = new Player[teamACount];
+
+        //this will go through each line and find the id and the name
+        while(teamA >> playid)
+        {
+            id = atoi(playid.c_str());
+            teamA >> name;
+            //goes through each player object in array and set the name and id of the player
+            teamAInfo[i].getPlayName(name);
+            teamAInfo[i].setPlayID(id);
+            i++;
+        }
+        teamA.close();
+    }
+    else cout<<"unable to open file";
+
+    //basics of team A accomplished, now lets move on to Team B
+
+    //reset i
+    i=0;
+
+    if(teamB.is_open())
+    {
+        getline(teamB, teamBName);
+        getline(teamB, teamcount);
+        teamBCount = atoi(teamcount.c_str());
+
+        //initialize the B array
+        teamBInfo = new Player[teamBCount];
+
+        while(teamB >> playid)
+        {
+            id = atoi(playid.c_str());
+            teamB >> name;
+            teamBInfo[i].getPlayName(name);
+            teamBInfo[i].setPlayID(id);
+            i++;
+        }
+        teamB.close();
+    }
+    else cout<<"unable to open file";
+
+    //reset i
+    i = 0;
+    if(matchInfo.is_open())
+    {
+        //gets the number of tags in match
+        getline(matchInfo, tags);
+        tagsInMatch = atoi(tags.c_str());
+        //the evaluation of the match file must happen here
+        while(matchInfo >> taggerString && i != tagsInMatch)
+        {
+            //these will get the info from the lines and separate them into specific ints
+            matchInfo >> taggedString;
+            matchInfo >> secondsString;
+            matchInfo >> pointsString;
+
+            //assign the strings to their proper ints
+            tagger = atoi(taggerString.c_str());
+            tagged = atoi(taggedString.c_str());
+            seconds = atoi(secondsString.c_str());
+            points = atoi(pointsString.c_str());
+
+            //for loop will go through A and B and check to see if the player tagged someone
+            for(int i = 0; i < 10; i++)
+                {
+                    if(teamAInfo[i].getPlayID() == tagger)
+                    {
+                        teamAInfo[i].addPoints(points);
+                        teamAInfo[i].timesPlayerTagged();
+                    }
+                    else if(teamBInfo[i].getPlayID() == tagger)
+                    {
+                        teamBInfo[i].addPoints(points);
+                        teamBInfo[i].timesPlayerTagged();
+                    }
+                }
+             i++;
+
+        }
+    }
+    else cout<< "unable to open the file";
+    matchInfo.close();
+
+    //Okay, so assuming that the team points have been added, I now want
+    //to compare the two teams to see who wins
+
+        for(int i = 0; i < teamACount; i++)
+        {
+            teamAPoints += teamAInfo[i].getPoints();
+            teamBPoints += teamAInfo[i].getPoints();
+        }
+
+    outPutFile.open();
+    if(outPutFile.is_open())
+    {
+        outPutFile << teamAName;
+        outPutFile << '\n';
+        for(int i = 0; i <teamACount; i++)
+        {
+            outPutFile<<teamAInfo[i].showName() << " had a total of " << teamAInfo[i].getTagged() << " tag(s)" << '\n';
+        }
+        outPutFile << '\n';
+        outPutFile<<'\n';
+
+        outPutFile << teamBName;
+        outPutFile<<'\n';
+        for(int i = 0; i <teamBCount; i++)
+        {
+            outPutFile<<teamBInfo[i].showName() << " had a total of " << teamBInfo[i].getTagged() << " tag(s)" << '\n';
+        }
+
+        outPutFile << '\n';
+        outPutFile << '\n';
+
+        outPutFile << teamAName << " : " << teamAPoints << " points" << '\n' << teamBName << " : " << teamBPoints << " points" << '\n';
+
+        if(teamBPoints > teamAPoints)
+        {
+            outPutFile << "Overall Winners: " << teamBName;
+        }
+        else
+        {
+            outPutFile << "Overall Winnders: " << teamAName;
+        }
+        outPutFile << '\n';
+    }
+
+    outPutFile.close();
+    return 0;
+}
